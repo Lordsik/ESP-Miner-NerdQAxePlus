@@ -306,7 +306,7 @@ void create_jobs_task(void *pvParameters)
 
     uint32_t last_ntime[2]{0};
     uint64_t last_submit_time = 0;
-    uint32_t extranonce_2 = 0;
+    uint32_t extranonce_2 = 0xFFFFFFFF;
 
     // CAN: per-slave rolling counters (upper 7 bits = slave_id, lower 25 = counter)
     uint32_t slave_counters[CAN_SLAVE_MAX] = {0};
@@ -375,7 +375,7 @@ void create_jobs_task(void *pvParameters)
         // save job
         asicJobs.storeJob(next_job, asic_job_id);
 
-        extranonce_2++;
+        extranonce_2--;
 
         // --- CAN: send raw job to each slave ---
         for (uint8_t slave = 0; slave < CAN_SLAVE_MAX; slave++) {
