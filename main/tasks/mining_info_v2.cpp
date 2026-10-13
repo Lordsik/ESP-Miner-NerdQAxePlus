@@ -53,7 +53,10 @@ bm_job *MiningInfoV2Standard::buildBmJob(uint32_t extranonce_2, int pool_id, uin
     job->version_mask = m_version_mask;
     job->target = m_nbits;
     job->ntime = m_ntime;
-    job->starting_nonce = 0;
+    //job->starting_nonce = 0;
+    // Generujemy losową liczbę 32-bitową i wymuszamy, aby należała do drugiej połowy (ustawiając najwyższy bit na 1)
+uint32_t random_second_half = esp_random() | 0x80000000;
+job->starting_nonce = random_second_half;
     job->pool_diff = m_difficulty;
     job->asic_diff = asic_diff;
     job->pool_id = pool_id;
