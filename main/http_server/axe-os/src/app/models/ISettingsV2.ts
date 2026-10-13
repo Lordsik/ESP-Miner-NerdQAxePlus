@@ -24,6 +24,7 @@ export interface ISettingsV2Pool {
     protocol: number;
     sv2AuthorityPubkey: string;
     sv2ChannelType: number;
+    sv2RequireAuth: boolean;
     coinbaseVerifyMode: number;
     coinbaseMaxFee: number;
     coinbaseVerifyForce: boolean;
@@ -51,6 +52,8 @@ export interface ISettingsV2 {
     ecoCoreVoltage?: number;
     frequencyOptions: number[];
     voltageOptions: number[];
+    absMinCoreVoltage: number;
+    absMaxCoreVoltage: number;
 
     // Stratum / pools
     poolMode: number;

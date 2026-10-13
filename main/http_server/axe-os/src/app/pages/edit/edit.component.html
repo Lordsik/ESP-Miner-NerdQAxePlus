@@ -41,7 +41,7 @@
                 </div>
             </nb-card-body>
         </nb-card>
-        <nb-card>
+        <nb-card id="cfg-pool">
             <nb-card-header>
             <div class="d-flex align-items-center justify-content-between">
                 <div>{{ 'SETTINGS.STRATUM' | translate }}</div>
@@ -163,6 +163,10 @@
                                     <small>{{ 'SETTINGS.SV2_AUTHORITY_PUBKEY_HINT' | translate }}</small>
                                 </div>
                             </div>
+                            <div class="form-row">
+                                <nb-checkbox formControlName="sv2RequireAuth">{{ 'SETTINGS.SV2_REQUIRE_AUTH' | translate }}</nb-checkbox><br />
+                                <small>{{ 'SETTINGS.SV2_REQUIRE_AUTH_HINT' | translate }}</small>
+                            </div>
                         </ng-container>
                         <div class="form-row" *ngIf="form.controls['stratumProtocol'].value === 0">
                             <nb-checkbox formControlName="stratumTLS">{{ 'MINING.STRATUM_TLS' | translate}}</nb-checkbox>
@@ -275,6 +279,10 @@
                                     <small>{{ 'SETTINGS.SV2_AUTHORITY_PUBKEY_HINT' | translate }}</small>
                                 </div>
                             </div>
+                            <div class="form-row">
+                                <nb-checkbox formControlName="fallbackSv2RequireAuth">{{ 'SETTINGS.SV2_REQUIRE_AUTH' | translate }}</nb-checkbox><br />
+                                <small>{{ 'SETTINGS.SV2_REQUIRE_AUTH_HINT' | translate }}</small>
+                            </div>
                         </ng-container>
                         <div class="form-row" *ngIf="form.controls['fallbackStratumProtocol'].value === 0">
                             <nb-checkbox formControlName="fallbackStratumTLS">{{ 'MINING.STRATUM_TLS' | translate}}</nb-checkbox>
@@ -314,7 +322,7 @@
                 </nb-tab>
             </nb-tabset>
         </nb-card>
-        <nb-card>
+        <nb-card id="cfg-asic">
             <nb-card-header>
                 <div class="d-flex align-items-center justify-content-between mt-2">
                     <div>{{ 'SETTINGS.MINING_SETTINGS' | translate }}</div>

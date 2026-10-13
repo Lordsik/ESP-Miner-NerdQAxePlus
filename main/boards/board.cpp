@@ -5,18 +5,30 @@
 #include "board.h"
 #include "nvs_config.h"
 #include "esp_log.h"
+#include "w5500.h"
 #include "../displays/displayDriver.h"
 
 const static char* TAG = "board";
 
 Board::Board() {
     m_absMaxAsicFrequency = 0;
+    m_absMinAsicVoltageMillis = 0;
     m_absMaxAsicVoltageMillis = 0;
     m_vrFrequency = m_defaultVrFrequency = 0;
     m_hasHashCounter = false;
     m_ecoAsicFrequency = 0;
     m_ecoAsicVoltageMillis = 0;
     m_numFans = 1;
+}
+
+// True if a W5500 answers on this board's ethernet pins (false if the board has none).
+bool Board::isEthConnected()
+{
+    const EthPins *pins = getEthPins();
+    if (!pins) {
+        return false;
+    }
+    return W5500::probe(pins->sclk, pins->mosi, pins->miso, pins->cs);
 }
 
 void Board::loadSettings()
@@ -44,6 +56,7 @@ void Board::loadSettings()
     m_vrFrequency = Config::getVrFrequency(m_defaultVrFrequency);
 
     for (int ch = 0; ch < 2; ch++) {
+        m_fanMode[ch] = Config::getFanMode(ch, m_fanMode[ch]);
         m_pidSettings[ch].targetTemp = Config::getFanPidTargetTemp(ch, m_pidSettings[ch].targetTemp);
         m_pidSettings[ch].p = Config::getFanPidP(ch, m_pidSettings[ch].p);
         m_pidSettings[ch].i = Config::getFanPidI(ch, m_pidSettings[ch].i);
@@ -156,9 +169,16 @@ void Board::setVrFrequency(uint32_t freq) {
 }
 
 bool Board::validateVoltage(float core_voltage) {
+    if (core_voltage == 0.0f) {
+        return true;  // 0V = disable output
+    }
     int millis = (int) (core_voltage * 1000.0f);
     // we allow m_absMaxAsicVoltageMillis = 0 for no limit to not break what was
     // working before on nerdaxe and nerdaxegamma
+    if (m_absMinAsicVoltageMillis && millis < m_absMinAsicVoltageMillis) {
+        ESP_LOGE(TAG, "Validation error. ASIC voltage %d is lower than absolute minimum value %d", millis, m_absMinAsicVoltageMillis);
+        return false;
+    }
     if (m_absMaxAsicVoltageMillis && millis > m_absMaxAsicVoltageMillis) {
         ESP_LOGE(TAG, "Validation error. ASIC voltage %d is higher than absolute maximum value %d", millis, m_absMaxAsicVoltageMillis);
         return false;

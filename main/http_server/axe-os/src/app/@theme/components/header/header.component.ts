@@ -1,8 +1,10 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
-import { NbMediaBreakpointsService, NbMenuService, NbSidebarService, NbThemeService } from '@nebular/theme';
+import { Component, OnDestroy, OnInit, TemplateRef, inject } from '@angular/core';
+import { NbDialogService, NbMediaBreakpointsService, NbMenuService, NbSidebarService, NbThemeService } from '@nebular/theme';
 import { LayoutService } from '../../../@core/utils.ts';
 import { SystemService } from '../../../services/system.service';
-import { map, takeUntil } from 'rxjs/operators';
+import { OtpAuthService } from '../../../services/otp-auth.service';
+import { TranslateService } from '@ngx-translate/core';
+import { map, switchMap, takeUntil } from 'rxjs/operators';
 import { Subject, Observable } from 'rxjs';
 import { IIdentifyV2 } from 'src/app/models/IIdentifyV2';
 
@@ -23,16 +25,18 @@ export class HeaderComponent implements OnInit, OnDestroy {
   private sidebarState: 'expanded' | 'compact' | 'collapsed' = 'expanded';
 
   themes = [
-    { value: 'cosmic',  name: 'Default' },
-    { value: 'default', name: 'Light' },
-    { value: 'dark',    name: 'Dark' },
+    { value: 'cosmic',    name: 'Default' },
+    { value: 'default',   name: 'Light' },
+    { value: 'dark',      name: 'Dark' },
+    { value: 'gaia', name: 'Gaia' },
   ];
 
   currentTheme = 'cosmic';  // Default theme if none is found in localStorage
   logoPath: string = '';    // Resolved logo path for the template
+  logoFailed: boolean = false;
   deviceModel: string = 'default'; // Fallback device model
 
-  private logoBaseName: string | null = null;
+  logoBaseName: string | null = null;
 
   // Transparent 16x16 placeholder (must exist in /assets)
   private static readonly PLACEHOLDER_LOGO = '/assets/default_dark.png';
@@ -46,7 +50,8 @@ export class HeaderComponent implements OnInit, OnDestroy {
     private themeService: NbThemeService,
     private layoutService: LayoutService,
     private breakpointService: NbMediaBreakpointsService,
-    private infoService: SystemService
+    private infoService: SystemService,
+    private dialogService: NbDialogService
   ) {
     this.setPlaceholderLogo();
   }
@@ -125,6 +130,30 @@ export class HeaderComponent implements OnInit, OnDestroy {
     this.updateLogo();
   }
 
+  private readonly otpAuth = inject(OtpAuthService);
+  private readonly translateService = inject(TranslateService);
+
+  /** Reset-stats dialog: also reset the persisted all-time stats. */
+  resetAllTime = false;
+
+  /** Open the reset-stats confirmation dialog (button lives next to the theme selector). */
+  openResetStats(dialog: TemplateRef<any>) {
+    this.resetAllTime = false;
+    this.dialogService.open(dialog);
+  }
+
+  /** Confirmed: reset mining statistics on the device, then close the dialog. */
+  confirmResetStats(ref: any) {
+    ref.close();
+    // all-time reset is permanent: the backend requires OTP (when enabled) for it
+    const reset$ = this.resetAllTime
+      ? this.otpAuth
+          .ensureOtp$('', this.translateService.instant('SECURITY.OTP_TITLE'), this.translateService.instant('SECURITY.OTP_HINT'))
+          .pipe(switchMap(({ totp }) => this.infoService.resetStats('', true, totp)))
+      : this.infoService.resetStats('');
+    reset$.subscribe({ next: () => {}, error: () => {} });
+  }
+
   ngOnDestroy() {
     this.destroy$.next();
     this.destroy$.complete();
@@ -174,6 +203,10 @@ export class HeaderComponent implements OnInit, OnDestroy {
     this.logoPath = HeaderComponent.PLACEHOLDER_LOGO;
   }
 
+  onLogoError() {
+    this.logoFailed = true;
+  }
+
   private updateLogo() {
     // While bootstrapping, force the placeholder
     if (this.bootstrapping) {
@@ -181,8 +214,10 @@ export class HeaderComponent implements OnInit, OnDestroy {
       return;
     }
 
+    this.logoFailed = false;
     // Choose logo variant based on theme ("default" is the light theme in Nebular).
     const logoVariant = this.currentTheme === 'default' ? 'light' : 'dark';
+    // Board-specific device logo (NerdAxeGaia, NerdQAxe+, …) from the device model.
     this.logoPath = `/assets/${this.deviceModel}_${logoVariant}.png`;
   }
 
