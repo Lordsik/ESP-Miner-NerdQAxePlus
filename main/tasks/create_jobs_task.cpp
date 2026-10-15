@@ -372,15 +372,27 @@ void create_jobs_task(void *pvParameters)
         }
         last_submit_time = current_time;
 
-        int asic_job_id = asics->sendWork(extranonce_2, next_job);
+        //int asic_job_id = asics->sendWork(extranonce_2, next_job);
+
+        //ESP_LOGD(TAG, "(%s) Sent Job (%d): %02X", active_pool_str, active_pool, asic_job_id);
+
+        // save job
+        //asicJobs.storeJob(next_job, asic_job_id);
+
+        //extranonce_2--;
+int asic_job_id = asics->sendWork(extranonce_2, next_job);
 
         ESP_LOGD(TAG, "(%s) Sent Job (%d): %02X", active_pool_str, active_pool, asic_job_id);
 
         // save job
         asicJobs.storeJob(next_job, asic_job_id);
 
-        extranonce_2--;
-
+        // --- AKTUALIZACJA EXTRANONCE DLA TUNERA ---
+        if (AutoTuner::isEnabled()) {
+            extranonce_2 = AutoTuner::getCurrentExtranonce();
+        } else {
+            extranonce_2--;
+        }
         // --- CAN: send raw job to each slave ---
         for (uint8_t slave = 0; slave < CAN_SLAVE_MAX; slave++) {
             if (!can_master_is_slave_active(slave)) continue;
