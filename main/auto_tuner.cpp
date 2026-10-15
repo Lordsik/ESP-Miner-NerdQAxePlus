@@ -13,7 +13,16 @@ namespace AutoTuner {
     static TunerStepResult s_steps[21];
     static uint32_t s_best_extranonce = 0;
     static uint32_t absolute_max_diff = 0;
-
+    uint32_t getCurrentExtranonce() {
+    if (!s_enabled) {
+        // Jeśli tuner wyłączony, pobierz standardową wartość z NVS (np. 73.24%)
+        uint16_t saved_pct = Config::getExtranonce2Pct();
+        float pct = (float)saved_pct / 100.0f;
+        return (uint32_t)(4294967295.0f * (pct / 100.0f));
+    }
+    // Jeśli tuner jest włączony, zwróć wartość dla bieżącego kroku
+    return s_steps[s_current_step].extranonce_val;
+}
     void init() {
         // Inicjalizacja kroków (0% do 100% co 5%)
         for (int i = 0; i <= 20; i++) {
