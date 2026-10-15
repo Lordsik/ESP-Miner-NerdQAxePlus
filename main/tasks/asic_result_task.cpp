@@ -8,7 +8,7 @@
 #include "nvs_config.h"
 #include "system.h"
 #include "boards/board.h"
-
+#include "auto_tuner.h"
 #include "simple_ring64.hpp"
 #include "utils.h"
 
@@ -95,7 +95,7 @@ void ASIC_result_task(void *pvParameters)
 
         // check the nonce difficulty
         double nonce_diff = test_nonce_value(job, asic_result.nonce, asic_result.rolled_version);
-
+        AutoTuner::reportShareDiff((uint32_t)nonce_diff);
         // get best known session diff
         char bestDiffString[16];
         suffixString(STRATUM_MANAGER->getBestSessionDiff(), bestDiffString, sizeof(bestDiffString), 3);
