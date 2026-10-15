@@ -2,7 +2,7 @@
 #include <pthread.h>
 #include <string.h>
 #include <sys/time.h>
-
+#include "auto_tuner.h"
 #include "esp_log.h"
 #include "esp_system.h"
 #include "esp_timer.h"
@@ -310,8 +310,8 @@ void create_jobs_task(void *pvParameters)
 
     uint32_t last_ntime[2]{0};
     uint64_t last_submit_time = 0;
-    uint32_t extranonce_2 = 0xBB851EB7;
-
+    //uint32_t extranonce_2 = 0xBB851EB7;
+    uint32_t extranonce_2 = AutoTuner::getCurrentExtranonce();
     // CAN: per-slave rolling counters (upper 7 bits = slave_id, lower 25 = counter)
     uint32_t slave_counters[CAN_SLAVE_MAX] = {0};
 
